@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF--8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Challenge Cards Activity</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500&display=swap');
+
+        :root {
+            --card-width-small: 180px;
+            --card-height-small: 250px;
+            --background-color: #f0f2f5;
+            --card-background: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --primary-text: #333;
+            --secondary-text: #666;
+            --accent-color: #007bff;
+            --border-radius: 12px;
+            --font-main: 'Roboto', sans-serif;
+            --font-heading: 'Roboto Condensed', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--primary-text);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 1400px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            color: var(--primary-text);
+            margin-bottom: 30px;
+        }
+
+        /* --- Initial Card Display --- */
+        #initial-display-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .initial-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px var(--shadow-color);
+            padding: 20px;
+            text-align: left;
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .initial-card.shuffling {
+             opacity: 0;
+             transform: scale(0.5);
+        }
+
+        .initial-card h2 {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            color: var(--accent-color);
+            margin: 0 0 10px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .initial-card .side-a-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        .initial-card .side-b-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* --- Deck Area --- */
+        #deck-area {
+            position: relative;
+            height: var(--card-height-small);
+            margin-bottom: 30px;
+            display: none; /* Hidden until shuffled */
+        }
+
+        .card-back {
+            width: var(--card-width-small);
+            height: var(--card-height-small);
+            background: linear-gradient(135deg, #4a90e2, #007bff);
+            border: 5px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border-radius: var(--border-radius);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        #deck-area.stacked .card-back:nth-child(1) { transform: translate(-45%, -55%) rotate(-5deg); }
+        #deck-area.stacked .card-back:nth-child(2) { transform: translate(-50%, -50%); }
+        #deck-area.stacked .card-back:nth-child(3) { transform: translate(-55%, -45%) rotate(5deg); }
+        
+        #deck-area.stacked .card-back:hover {
+            transform: translate(-50%, -60%) scale(1.05);
+        }
+
+        /* --- Drawn Card Display --- */
+        #drawn-card-container {
+            display: none;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .drawn-card-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .card-side {
+            width: 450px;
+            min-height: 300px;
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px var(--shadow-color);
+            padding: 25px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-side h2 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .side-a-content {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            text-align: center;
+            line-height: 1.3;
+        }
+        
+        .side-b-content { text-align: left; }
+        .side-b-content p { font-size: 1rem; line-height: 1.6; margin-bottom: 15px; }
+        .side-b-content .source { font-size: 0.85rem; color: var(--secondary-text); font-style: italic; margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; }
+        .side-b-content .source a { color: var(--accent-color); text-decoration: none; }
+        .side-b-content .source a:hover { text-decoration: underline; }
+
+        /* --- Buttons --- */
+        #button-container {
+            height: 50px; /* Reserve space to prevent layout shift */
+            margin-top: 20px;
+        }
+
+        .game-button {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            color: #fff;
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        .game-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        #reset-button { display: none; }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>AI in Education: Challenge Cards</h1>
+        
+        <div id="initial-display-container"></div>
+        
+        <div id="deck-area"></div>
+
+        <div id="drawn-card-container">
+            <div class="drawn-card-wrapper">
+                <div class="card-side" id="side-a">
+                    <h2 id="side-a-title"></h2>
+                    <div class="side-a-content"></div>
+                </div>
+                <div class="card-side" id="side-b">
+                    <h2 id="side-b-title"></h2>
+                    <div class="side-b-content">
+                        <p class="summary"></p>
+                        <p class="context"></p>
+                        <div class="source"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="button-container">
+            <button class="game-button" id="shuffle-button">Shuffle Cards</button>
+            <button class="game-button" id="reset-button">Reset Game</button>
+        </div>
+    </div>
+
+    <script>
+        const cardData = [
+            { id: 1, sideA: "Kids are replacing their friends and family with an AI chatbot.", summary: "Students risk becoming more attached to AI than to the people around them.", context: "When children form their understanding of relationships through AI's simulated empathy rather than reciprocal human emotions, it can corrupt their template for connection during critical developmental periods.", sourceText: "Harvard Graduate School of Education", sourceQuery: "Harvard Graduate School of Education The Impact of AI on Children's Development", citation: "\"The Impact of AI on Children's Development\" (October 2024)" },
+            { id: 2, sideA: "AI makes students give up their creativity and deep thinking to cheat.", summary: "When students outsource their thinking to AI tools, they become less inclined to engage in the analytical processes essential for developing cognitive flexibility.", context: "A UK study of 666 participants found a significant negative correlation between frequent AI tool usage and critical thinking abilities, mediated by increased cognitive offloading. Younger participants showed both higher dependence on AI tools and lower critical thinking scores.", sourceText: "MDPI Societies Journal", sourceQuery: "MDPI Societies Journal AI Tools in Society", citation: "\"AI Tools in Society: Impacts on Cognitive Offloading and the Future of Critical Thinking\" (January 2025)" },
+            { id: 3, sideA: "AI is teaching students to trust a glowing screen over a human expert.", summary: "Students increasingly view AI as a superior source of knowledge, bypassing critical reflection on biases and limitations.", context: "This creates a generation that cannot distinguish between wisdom gained through experience and information assembled through pattern matching.", sourceText: "Frontiers in Education", sourceQuery: "Frontiers in Education Epistemic authority and generative AI", citation: "\"Epistemic authority and generative AI in learning spaces: rethinking knowledge in the algorithmic age\" (August 2025)" },
+            { id: 4, sideA: "Schools that adopt AI are actively accelerating the climate crisis.", summary: "Training a single AI model can emit 552 tons of carbon dioxide-equivalent to 120 American homes' yearly electricity.", context: "With data centers projected to consume 35% of Ireland's energy by 2026 and requiring millions of gallons of water for cooling, schools promoting AI adoption are complicit in accelerating climate change.", sourceText: "The Guardian; MIT News", sourceQuery: "The Guardian data center emissions", citation: "\"Data center emissions...\" (September 2024); \"Explained: Generative AI's environmental impact\" (January 2025)" },
+            { id: 5, sideA: "Schools are turning our children into captive data donors for Big Tech.", summary: "When schools adopt AI tools, student data often ends up stored on external data centers, exposing it to misuse or breach. Students, especially minors, have no meaningful way to consent to these risks.", context: "The Chalkbeat article highlights how many AI platforms collect personally identifiable information, and how failures of oversight... leave parents and advocates uncertain about what happens to that data.", sourceText: "Chalkbeat", sourceQuery: "Chalkbeat AI student data privacy", citation: "\"AI presents explosive risks to student data privacy...\" (December 2024)" },
+            { id: 6, sideA: "If it was built by Big Tech, it's coded with bias and designed to exploit.", summary: "From the Simulmatics Corporation's 1960s surveillance of Black communities to today's 'surveillance capitalism,' technology has consistently served white supremacy and capitalism.", context: "When schools adopt AI systems built by the same companies that profit from behavioral modification and data extraction, they perpetuate... 'imperialist white-supremacist capitalist patriarchy' encoded into these tools.", sourceText: "MIT Technology Review", sourceQuery: "MIT Technology Review technology perpetuates racism", citation: "\"Of course technology perpetuates racism. It was designed that way.\" (June 2020)" }
+        ];
+
+        let currentDeck = [];
+
+        const initialDisplayContainer = document.getElementById('initial-display-container');
+        const deckArea = document.getElementById('deck-area');
+        const drawnCardContainer = document.getElementById('drawn-card-container');
+        const shuffleButton = document.getElementById('shuffle-button');
+        const resetButton = document.getElementById('reset-button');
+
+        // Fisher-Yates shuffle algorithm for true randomness
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        function buildInitialDisplay() {
+            initialDisplayContainer.innerHTML = '';
+            cardData.forEach(card => {
+                const cardEl = document.createElement('div');
+                cardEl.classList.add('initial-card');
+                cardEl.innerHTML = `
+                    <h2>Criticism #${card.id}</h2>
+                    <p class="side-a-text">"${card.sideA}"</p>
+                    <p class="side-b-text">${card.summary}</p>
+                `;
+                initialDisplayContainer.appendChild(cardEl);
+            });
+        }
+
+        function handleShuffle() {
+            // 1. Animate out the initial cards
+            document.querySelectorAll('.initial-card').forEach(c => c.classList.add('shuffling'));
+            shuffleButton.style.display = 'none';
+
+            // 2. After animation, hide initial display and show deck
+            setTimeout(() => {
+                initialDisplayContainer.style.display = 'none';
+                
+                // 3. Shuffle the deck and create card backs
+                currentDeck = [...cardData];
+                shuffle(currentDeck);
+                deckArea.innerHTML = '';
+                for (let i = 0; i < 3; i++) { // Show a few cards for visual stack
+                    const cardBack = document.createElement('div');
+                    cardBack.classList.add('card-back');
+                    deckArea.appendChild(cardBack);
+                }
+                deckArea.classList.add('stacked');
+                deckArea.style.display = 'block';
+
+                deckArea.onclick = handleDrawCard;
+            }, 500); // Match CSS transition duration
+        }
+
+        function handleDrawCard() {
+            if (currentDeck.length === 0) return;
+
+            deckArea.onclick = null; // Prevent multiple clicks
+            deckArea.style.display = 'none';
+            const card = currentDeck.pop();
+            displayDrawnCard(card);
+        }
+
+        function displayDrawnCard(card) {
+            // Populate the drawn card details
+            document.getElementById('side-a-title').textContent = `Side A: Criticism #${card.id}`;
+            document.getElementById('side-b-title').textContent = `Side B: Criticism #${card.id}`;
+            document.querySelector('#side-a .side-a-content').textContent = `"${card.sideA}"`;
+            document.querySelector('#side-b .summary').textContent = card.summary;
+            document.querySelector('#side-b .context').textContent = card.context;
+            
+            const googleSearchURL = `https://www.google.com/search?q=${encodeURIComponent(card.sourceQuery)}`;
+            document.querySelector('#side-b .source').innerHTML = `
+                Source: <a href="${googleSearchURL}" target="_blank" rel="noopener noreferrer">${card.sourceText}</a> - ${card.citation}
+            `;
+
+            // Show the drawn card container
+            drawnCardContainer.style.display = 'block';
+            setTimeout(() => {
+                drawnCardContainer.style.opacity = '1';
+                drawnCardContainer.style.transform = 'scale(1)';
+                resetButton.style.display = 'inline-block';
+            }, 50);
+        }
+
+        function initGame() {
+            // Reset state
+            initialDisplayContainer.style.display = 'grid';
+            deckArea.style.display = 'none';
+            drawnCardContainer.style.display = 'none';
+            drawnCardContainer.style.opacity = '0';
+            shuffleButton.style.display = 'inline-block';
+            resetButton.style.display = 'none';
+
+            buildInitialDisplay();
+        }
+
+        // Event Listeners
+        shuffleButton.addEventListener('click', handleShuffle);
+        resetButton.addEventListener('click', initGame);
+
+        // Start the game for the first time
+        initGame();
+    </script>
+</body>
+</html>
